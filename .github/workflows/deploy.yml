@@ -1,0 +1,33 @@
+name: Deploy 
+
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: SCP
+      env:
+        PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        HOSTNAME: ${{secrets.SSH_HOST}}
+        USER_NAME: ${{secrets.USER_NAME}}
+      run: |
+          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
+          echo "Starting SCP..."
+          scp -o StrictHostKeyChecking=no -i private_key app.rb ${USER_NAME}@${HOSTNAME}:/home/ubuntu          
+          echo "Starting SSH..."
+          ssh -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOSTNAME} '
+
+              # Now we have got the access of EC2 and we will start the deploy .
+              docker stop nowr || true
+              docker run --rm --name nowr -w /app -v $(pwd):/app -p 3000:3000 -d ruby ruby app.rb
+              '
+          echo "Deploy finished"
