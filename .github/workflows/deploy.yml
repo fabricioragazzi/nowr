@@ -28,6 +28,8 @@ jobs:
 
               # Now we have got the access of EC2 and we will start the deploy .
               docker stop nowr || true
+              docker rm -f nowr || true
+              sleep 1
               docker run --rm --name nowr -w /app -v $(pwd):/app -p 3000:3000 -d ruby ruby app.rb
               '
           echo "Deploy finished"
